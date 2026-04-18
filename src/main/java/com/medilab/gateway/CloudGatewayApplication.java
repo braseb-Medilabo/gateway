@@ -20,9 +20,13 @@ public class CloudGatewayApplication {
     @Bean
     RouteLocator routeLocator(RouteLocatorBuilder builder) {
 	    return builder.routes()
+	            .route("notesPatient", 
+                        r-> r.path("/patient/note/**")
+                        .filters(f -> f.addResponseHeader("powered-by", "notesPatient"))
+                        .uri("http://localhost:9001"))
 	            .route("infosPatients", 
 	                    r -> r.path("/patient/**")
-	                    .filters(f -> f.addResponseHeader("powered-by", "Spring cloud gataway"))
+	                    .filters(f -> f.addResponseHeader("powered-by", "infosPatient"))
         	                            //.addResponseHeader("Access-Control-Allow-Origin", "http://localhost:5173")
         	                            //.addResponseHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
         	                            //.addResponseHeader("Access-Control-Allow-Headers", "*"))
