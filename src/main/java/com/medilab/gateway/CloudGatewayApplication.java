@@ -31,6 +31,7 @@ public class CloudGatewayApplication {
         	                            //.addResponseHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
         	                            //.addResponseHeader("Access-Control-Allow-Headers", "*"))
 	                    .uri("http://localhost:9000"))
+	            
 	            .build();
 	                  
 	}
