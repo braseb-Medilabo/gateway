@@ -2,10 +2,15 @@ package com.medilab.gateway.configuration;
 
 
 
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
@@ -18,16 +23,24 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import reactor.core.publisher.Mono;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
+    private final CorsConfigurationSource corsConfigurationSource;
+
+    SecurityConfiguration(CorsConfigurationSource corsConfigurationSource) {
+        this.corsConfigurationSource = corsConfigurationSource;
+    }
+
     @Bean
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
 
         return http
+                .cors(cors -> {cors.configurationSource(corsConfigurationSource);}) // active CORS dans Security
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS).permitAll() // autorise les preflight CORS
@@ -48,10 +61,29 @@ public class SecurityConfiguration {
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .exceptionHandling(exceptions -> exceptions
-                        .authenticationEntryPoint((exchange, ex) -> 
-                            Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED))
+                        .authenticationEntryPoint((exchange, ex) -> {
+                                ServerHttpResponse response = exchange.getResponse();
+                                response.setStatusCode(HttpStatus.UNAUTHORIZED);
+                                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                                String body = "{\"message\":\"UNAUTHORIZED\"}";
+                                DataBuffer buffer = response.bufferFactory().wrap(body.getBytes());
+                                
+                                return response.writeWith(Mono.just(buffer));
+                                
+                            }
                         )
+                        .accessDeniedHandler((exchange, ex) -> {
+                            ServerHttpResponse response = exchange.getResponse();
+                            response.setStatusCode(HttpStatus.FORBIDDEN);
+                            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+                            String body = "{\"message\":\"ACCES DENIED\"}";
+                            DataBuffer buffer = response.bufferFactory().wrap(body.getBytes());
+                            
+                            return response.writeWith(Mono.just(buffer));
+                        })
                     )
+                    
+                
                 .build();
     }
     
