@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
-import org.springframework.web.cors.reactive.CorsWebFilter;
+
 
 
 @SpringBootApplication
@@ -25,6 +25,9 @@ public class CloudGatewayApplication {
                         r-> r.path("/patient/note/**")
                         .filters(f -> f.addResponseHeader("powered-by", "notesPatient"))
                         .uri("http://localhost:9001"))
+	            .route("riskPatients",
+	                    r -> r.path("/patient/risk/**")
+	                    .uri("http://localhost:9002"))
 	            .route("infosPatients", 
 	                    r -> r.path("/patient/**")
 	                    .filters(f -> f.addResponseHeader("powered-by", "infosPatient"))
