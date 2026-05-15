@@ -3,6 +3,7 @@ package com.medilab.gateway.controller;
 import java.nio.file.AccessDeniedException;
 import java.util.Collection;
 import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
@@ -19,10 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import reactor.core.publisher.Mono;
 
 @RestController
+@RequestMapping("${api.prefix}")
 public class LoginController {
 
     private final ReactiveAuthenticationManager authenticationManager;
@@ -33,6 +36,8 @@ public class LoginController {
         this.authenticationManager = authenticationManager;
         
     }
+    
+    
 
 
     @PostMapping("/login")

@@ -3,6 +3,7 @@ package com.medilab.gateway.configuration;
 
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -29,6 +30,9 @@ import reactor.core.publisher.Mono;
 public class SecurityConfiguration {
 
     private final CorsConfigurationSource corsConfigurationSource;
+    
+    @Value("${api.prefix}")
+    private String apiPrefix;
 
     SecurityConfiguration(CorsConfigurationSource corsConfigurationSource) {
         this.corsConfigurationSource = corsConfigurationSource;
@@ -42,16 +46,31 @@ public class SecurityConfiguration {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS).permitAll() // autorise les preflight CORS
-                        .pathMatchers("/login", "/logout").permitAll()
-                        .pathMatchers(HttpMethod.GET, "/patient/**")
+                        .pathMatchers(  apiPrefix + "/login", 
+                                        apiPrefix + "/logout",
+                                        // Swagger UI gateway
+                                        "/swagger-ui/**",
+                                        //"/webjars/**",
+                                        "/doc",
+        
+                                        // OpenAPI docs gateway
+                                        apiPrefix + "/patient/v3/api-docs",
+                                        apiPrefix + "/patient/note/v3/api-docs",
+                                        apiPrefix + "/patient/risk/v3/api-docs",
+        
+                                        // swagger config
+                                        "/v3/api-docs/swagger-config").permitAll()
+                        .pathMatchers(HttpMethod.GET, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN", "USER")
-                        .pathMatchers(HttpMethod.POST, "/patient/**")
+                        .pathMatchers(HttpMethod.POST, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN")
-                            .pathMatchers(HttpMethod.PUT, "/patient/**")
+                            .pathMatchers(HttpMethod.PUT, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN")
-                        .pathMatchers(HttpMethod.DELETE, "/patient/**")
+                        .pathMatchers(HttpMethod.DELETE, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN")
-                        .pathMatchers("/patient/note/**")
+                        .pathMatchers(apiPrefix + "/patient/note/**")
+                            .hasAnyRole("ADMIN", "USER")
+                        .pathMatchers(apiPrefix + "/patient/risk/**")
                             .hasAnyRole("ADMIN", "USER")
                         .anyExchange().authenticated()
                 )

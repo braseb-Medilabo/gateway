@@ -1,5 +1,6 @@
 package com.medilab.gateway;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -14,7 +15,10 @@ import org.springframework.web.cors.reactive.CorsConfigurationSource;
 @SpringBootApplication
 public class CloudGatewayApplication {
 
-	public static void main(String[] args) {
+	@Value("${api.prefix}")
+	private String apiPrefix;
+    
+    public static void main(String[] args) {
 		SpringApplication.run(CloudGatewayApplication.class, args);
 	}
 
@@ -22,15 +26,20 @@ public class CloudGatewayApplication {
     RouteLocator routeLocator(RouteLocatorBuilder builder) {
 	    return builder.routes()
 	            .route("notesPatient", 
-                        r-> r.path("/patient/note/**")
-                        .filters(f -> f.addResponseHeader("powered-by", "notesPatient"))
+                        r-> r.path(apiPrefix + "/patient/note/**")
+                        .filters(f -> f.addResponseHeader("powered-by", "notesPatient")
+                                      .rewritePath(apiPrefix + "/patient/note/(?<remainingPath>.*)", "/${remainingPath}"))
                         .uri("http://localhost:9001"))
 	            .route("riskPatients",
-	                    r -> r.path("/patient/risk/**")
+	                    r -> r.path(apiPrefix + "/patient/risk/**")
+	                    .filters(f -> f.rewritePath(apiPrefix + "/patient/risk/(?<remainingPath>.*)", "/${remainingPath}")
+	                                .addRequestHeader("powered-by", "riskPatients"))
 	                    .uri("http://localhost:9002"))
 	            .route("infosPatients", 
-	                    r -> r.path("/patient/**")
-	                    .filters(f -> f.addResponseHeader("powered-by", "infosPatient"))
+	                    r -> r.path(apiPrefix + "/patient/**")
+	                    .filters(f -> f.addResponseHeader("powered-by", "infosPatient")
+	                                   .rewritePath(apiPrefix + "/patient/(?<remainingPath>.*)", "/${remainingPath}"))
+	                    
         	            .uri("http://localhost:9000"))
 	            
 	            .build();
