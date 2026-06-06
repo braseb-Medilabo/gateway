@@ -54,8 +54,8 @@ public class JwtService {
                                 .toList())
                 .subject(user.getUsername())
                 .issuedAt(now)
-                //.expiration(new Date(now.getTime() + 60 * 10 * 1000))
-                .expiration(new Date(now.getTime() + 10 * 1000))
+                .expiration(new Date(now.getTime() + 60 * 10 * 1000))
+                //.expiration(new Date(now.getTime() + 10 * 1000))
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
                 
