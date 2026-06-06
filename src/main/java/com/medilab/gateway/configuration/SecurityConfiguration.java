@@ -3,6 +3,7 @@ package com.medilab.gateway.configuration;
 
 
 
+import com.medilab.gateway.security.JwtAuthentificationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
@@ -29,13 +31,16 @@ import reactor.core.publisher.Mono;
 @EnableWebFluxSecurity
 public class SecurityConfiguration {
 
+    private final JwtAuthentificationFilter jwtAuthentificationFilter;
+
     private final CorsConfigurationSource corsConfigurationSource;
     
     @Value("${api.prefix}")
     private String apiPrefix;
 
-    SecurityConfiguration(CorsConfigurationSource corsConfigurationSource) {
+    SecurityConfiguration(CorsConfigurationSource corsConfigurationSource, JwtAuthentificationFilter jwtAuthentificationFilter) {
         this.corsConfigurationSource = corsConfigurationSource;
+        this.jwtAuthentificationFilter = jwtAuthentificationFilter;
     }
 
     @Bean
@@ -46,25 +51,25 @@ public class SecurityConfiguration {
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS).permitAll() // autorise les preflight CORS
-                        .pathMatchers(  apiPrefix + "/login", 
-                                        apiPrefix + "/logout",
+                        .pathMatchers(  apiPrefix + "/auth/**", 
+                                        //apiPrefix + "/logout",
                                         // Swagger UI gateway
                                         "/swagger-ui/**",
                                         //"/webjars/**",
                                         "/doc",
-        
+                                        //"/doc/swagger-config",
                                         // OpenAPI docs gateway
                                         apiPrefix + "/patient/v3/api-docs",
                                         apiPrefix + "/patient/note/v3/api-docs",
                                         apiPrefix + "/patient/risk/v3/api-docs",
-        
+                                        "/v3/api-docs",
                                         // swagger config
                                         "/v3/api-docs/swagger-config").permitAll()
                         .pathMatchers(HttpMethod.GET, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN", "USER")
                         .pathMatchers(HttpMethod.POST, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN")
-                            .pathMatchers(HttpMethod.PUT, apiPrefix + "/patient/**")
+                        .pathMatchers(HttpMethod.PUT, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN")
                         .pathMatchers(HttpMethod.DELETE, apiPrefix + "/patient/**")
                             .hasAnyRole("ADMIN")
@@ -72,6 +77,7 @@ public class SecurityConfiguration {
                             .hasAnyRole("ADMIN", "USER")
                         .pathMatchers(apiPrefix + "/patient/risk/**")
                             .hasAnyRole("ADMIN", "USER")
+                        .pathMatchers(HttpMethod.GET, apiPrefix + "/me").authenticated()
                         .anyExchange().authenticated()
                 )
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
@@ -100,7 +106,7 @@ public class SecurityConfiguration {
                         })
                     )
                     
-                
+                .addFilterAfter(jwtAuthentificationFilter, SecurityWebFiltersOrder.AUTHENTICATION)
                 .build();
     }
     
@@ -129,7 +135,7 @@ public class SecurityConfiguration {
         return new BCryptPasswordEncoder();
     }
     
-    @Bean
+    /*@Bean
     ReactiveAuthenticationManager authenticationManager(ReactiveUserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
 
         UserDetailsRepositoryReactiveAuthenticationManager manager =
@@ -138,5 +144,5 @@ public class SecurityConfiguration {
        manager.setPasswordEncoder(passwordEncoder);
 
         return manager;
-    }
+    }*/
 }
