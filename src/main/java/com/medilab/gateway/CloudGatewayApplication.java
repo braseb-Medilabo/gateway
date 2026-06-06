@@ -28,17 +28,17 @@ public class CloudGatewayApplication {
 	            .route("notesPatient", 
                         r-> r.path(apiPrefix + "/patient/note/**")
                         .filters(f -> f.addResponseHeader("powered-by", "notesPatient")
-                                      .rewritePath(apiPrefix + "/patient/note/(?<remainingPath>.*)", "/${remainingPath}"))
+                                      .rewritePath(apiPrefix + "/(?<remainingPath>.*)", "/${remainingPath}"))
                         .uri("http://localhost:9001"))
 	            .route("riskPatients",
 	                    r -> r.path(apiPrefix + "/patient/risk/**")
-	                    .filters(f -> f.rewritePath(apiPrefix + "/patient/risk/(?<remainingPath>.*)", "/${remainingPath}")
+	                    .filters(f -> f.rewritePath(apiPrefix + "/(?<remainingPath>.*)", "/${remainingPath}")
 	                                .addRequestHeader("powered-by", "riskPatients"))
 	                    .uri("http://localhost:9002"))
 	            .route("infosPatients", 
 	                    r -> r.path(apiPrefix + "/patient/**")
 	                    .filters(f -> f.addResponseHeader("powered-by", "infosPatient")
-	                                   .rewritePath(apiPrefix + "/patient/(?<remainingPath>.*)", "/${remainingPath}"))
+	                                   .rewritePath(apiPrefix + "/(?<remainingPath>.*)", "/${remainingPath}"))
 	                    
         	            .uri("http://localhost:9000"))
 	            
