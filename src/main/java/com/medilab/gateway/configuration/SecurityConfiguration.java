@@ -1,8 +1,5 @@
 package com.medilab.gateway.configuration;
 
-
-
-
 import com.medilab.gateway.security.JwtAuthentificationFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,19 +9,19 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
 import reactor.core.publisher.Mono;
 
 @Configuration
@@ -33,13 +30,16 @@ public class SecurityConfiguration {
 
     private final JwtAuthentificationFilter jwtAuthentificationFilter;
 
-    private final CorsConfigurationSource corsConfigurationSource;
+    //private final CorsConfigurationSource corsConfigurationSource;
     
     @Value("${api.prefix}")
     private String apiPrefix;
+    
+    @Value("${frontend.url}")
+    private String frontendUrl;
 
-    SecurityConfiguration(CorsConfigurationSource corsConfigurationSource, JwtAuthentificationFilter jwtAuthentificationFilter) {
-        this.corsConfigurationSource = corsConfigurationSource;
+    SecurityConfiguration(JwtAuthentificationFilter jwtAuthentificationFilter) {
+        //this.corsConfigurationSource = corsConfigurationSource;
         this.jwtAuthentificationFilter = jwtAuthentificationFilter;
     }
 
@@ -47,7 +47,7 @@ public class SecurityConfiguration {
     SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
 
         return http
-                .cors(cors -> {cors.configurationSource(corsConfigurationSource);}) // active CORS dans Security
+                .cors(cors -> {cors.configurationSource(corsConfigurationSource());}) // active CORS dans Security
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(HttpMethod.OPTIONS).permitAll() // autorise les preflight CORS
@@ -133,6 +133,21 @@ public class SecurityConfiguration {
     @Bean 
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+    
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+
+        CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedOrigin(frontendUrl);
+        config.addAllowedMethod("*");
+        config.addAllowedHeader("*");
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+
+        return source;
     }
     
     /*@Bean

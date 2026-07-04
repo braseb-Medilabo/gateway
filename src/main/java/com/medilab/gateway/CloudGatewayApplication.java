@@ -6,9 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-import org.springframework.web.cors.reactive.CorsConfigurationSource;
 
 
 
@@ -17,6 +14,15 @@ public class CloudGatewayApplication {
 
 	@Value("${api.prefix}")
 	private String apiPrefix;
+	
+	@Value("${service.infospatient.url}")
+	private String serviceInfosPatientUrl;
+	
+	@Value("${service.notespatient.url}")
+    private String serviceNotesPatientUrl;
+	
+	@Value("${service.riskpatient.url}")
+    private String serviceRiskPatientUrl;
     
     public static void main(String[] args) {
 		SpringApplication.run(CloudGatewayApplication.class, args);
@@ -29,51 +35,22 @@ public class CloudGatewayApplication {
                         r-> r.path(apiPrefix + "/patient/note/**")
                         .filters(f -> f.addResponseHeader("powered-by", "notesPatient")
                                       .rewritePath(apiPrefix + "/(?<remainingPath>.*)", "/${remainingPath}"))
-                        .uri("http://localhost:9001"))
+                        .uri(serviceNotesPatientUrl))
 	            .route("riskPatients",
 	                    r -> r.path(apiPrefix + "/patient/risk/**")
 	                    .filters(f -> f.rewritePath(apiPrefix + "/(?<remainingPath>.*)", "/${remainingPath}")
 	                                .addRequestHeader("powered-by", "riskPatients"))
-	                    .uri("http://localhost:9002"))
+	                    .uri(serviceRiskPatientUrl))
 	            .route("infosPatients", 
 	                    r -> r.path(apiPrefix + "/patient/**")
 	                    .filters(f -> f.addResponseHeader("powered-by", "infosPatient")
 	                                   .rewritePath(apiPrefix + "/(?<remainingPath>.*)", "/${remainingPath}"))
 	                    
-        	            .uri("http://localhost:9000"))
+        	            .uri(serviceInfosPatientUrl))
 	            
 	            .build();
 	                  
 	}
-
-    /*@Bean
-    CorsWebFilter corsWebFilter() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173");
-        config.addAllowedMethod("*");
-        config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return new CorsWebFilter(source);
-    }*/
-    
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-
-        CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173");
-        config.addAllowedMethod("*");
-        config.addAllowedHeader("*");
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
-    }
 
 }
 
